@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Personal Expense Tracker - Premium Fintech Dashboard</title>
+  <!-- Link premium stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body theme="dark">
+
+  <div id="app-container">
+
+    <!-- Sidebar Navigation / Mobile Bottom Bar -->
+    <sidebar>
+      <div class="brand">
+        <div class="brand-icon">
+          <i data-lucide="wallet"></i>
+        </div>
+        <span>Tracker PRO</PROg></span>
+      </div>
+
+      <ul class="nav-links">
+        <li>
+          <a class="nav-item active" onclick="switchTab('dashboard')" id="nav-dashboard">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-item" onclick="switchTab('transactions')" id="nav-transactions">
+            <i data-lucide="receipt"></i>
+            <span>Transactions Log</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-item" onclick="switchTab('budgets')" id="nav-budgets">
+            <i data-lucide="piggy-bank"></i>
+            <span>Limits & Budgets</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-item" onclick="switchTab('reports')" id="nav-reports">
+            <i data-lucide="bar-chart-3"></i>
+            <span>Reports & Setup</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-primary" onclick="openBulkImportModal()" style="width: 100%; margin-bottom: 8px;">
+          <i data-lucide="plus-square"></i>
+          <span>Import SMS</span>
+        </button>
+        <button class="btn btn-secondary" onclick="resetDatabaseToSeeded()"
+          style="width: 100%; font-size: 0.8rem; padding: 8px 12px;">
+          <i data-lucide="rotate-ccw"></i>
+          <span>Reset to Seed</span>
+        </button>
+        <div style="font-size: 0.72rem; text-align: center; color: var(--text-muted); margin-top: 10px;">
+          © 2002 - 2026 Kich Technologies
+          <br>
+          All Rights Reserved
+        </div>
+      </div>
+    </sidebar>
+
+    <!-- Main Content Area -->
+    <main>
+
+      <!-- Premium App Header -->
+      <header>
+        <div class="header-search">
+          <i data-lucide="search" style="color: var(--text-muted); width: 18px; height: 18px;"></i>
+          <input type="text" id="global-search" placeholder="Search transactions, merchants, categories..."
+            oninput="handleGlobalSearch(this.value)">
+        </div>
+
+        <div class="header-actions">
+          <button class="btn btn-icon" onclick="toggleTheme()" title="Toggle Theme Mode">
+            <i data-lucide="moon" class="theme-toggle-icon" id="theme-icon"></i>
+          </button>
+
+          <button class="btn btn-icon" onclick="refreshDashboard()" title="Re-index local database">
+            <i data-lucide="refresh-cw" id="sync-icon"></i>
+          </button>
+
+          <button class="btn btn-primary" onclick="openAddTransactionModal('Debit')">
+            <i data-lucide="plus"></i>
+            <span>Add Transaction</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB 1: DASHBOARD VIEW -->
+      <div id="tab-dashboard" class="tab-content active">
+
+        <!-- Primary KPI Metrics Row -->
+        <div class="kpi-grid">
+          <div class="kpi-card balance">
+            <div class="kpi-header">
+              <span class="kpi-title">Net Balance</span>
+              <div class="kpi-icon"><i data-lucide="landmark"></i></div>
+            </div>
+            <div class="kpi-value" id="val-balance">₹0</div>
+            <div class="kpi-sub">Total Net Asset Value</div>
+          </div>
+
+          <div class="kpi-card income">
+            <div class="kpi-header">
+              <span class="kpi-title">Monthly Income</span>
+              <div class="kpi-icon"><i data-lucide="trending-up"></i></div>
+            </div>
+            <div class="kpi-value" id="val-income">₹0</div>
+            <div class="kpi-sub" id="val-savings-rate">0% Savings Rate</div>
+          </div>
+
+          <div class="kpi-card expense">
+            <div class="kpi-header">
+              <span class="kpi-title">Monthly Expenses</span>
+              <div class="kpi-icon"><i data-lucide="trending-down"></i></div>
+            </div>
+            <div class="kpi-value" id="val-expenses">₹0</div>
+            <div class="kpi-sub">Total Spends this month</div>
+          </div>
+
+          <div class="kpi-card savings">
+            <div class="kpi-header">
+              <span class="kpi-title">Net Savings</span>
+              <div class="kpi-icon"><i data-lucide="percent"></i></div>
+            </div>
+            <div class="kpi-value" id="val-savings">₹0</div>
+            <div class="kpi-sub">Total monthly savings</div>
+          </div>
+        </div>
+
+        <!-- Secondary KPI Metrics Row -->
+        <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+          <div class="kpi-card" style="padding: 20px;">
+            <div class="kpi-header">
+              <span class="kpi-title" style="font-size:0.75rem;">Transaction Count</span>
+              <div class="kpi-icon" style="width:30px; height:30px; font-size:0.9rem;"><i data-lucide="activity"></i>
+              </div>
+            </div>
+            <div class="kpi-value" id="val-tx-count" style="font-size:1.6rem; margin-top:8px;">0</div>
+            <div class="kpi-sub" style="font-size:0.78rem;">Logs in current month</div>
+          </div>
+
+          <div class="kpi-card" style="padding: 20px;">
+            <div class="kpi-header">
+              <span class="kpi-title" style="font-size:0.75rem;">Average Daily Spends</span>
+              <div class="kpi-icon" style="width:30px; height:30px; font-size:0.9rem;"><i data-lucide="calculator"></i>
+              </div>
+            </div>
+            <div class="kpi-value" id="val-avg-spends" style="font-size:1.6rem; margin-top:8px;">₹0</div>
+            <div class="kpi-sub" style="font-size:0.78rem;">Aggregated daily average</div>
+          </div>
+
+          <div class="kpi-card" style="padding: 20px;">
+            <div class="kpi-header">
+              <span class="kpi-title" style="font-size:0.75rem;">Top Category</span>
+              <div class="kpi-icon" style="width:30px; height:30px; font-size:0.9rem;"><i data-lucide="tags"></i></div>
+            </div>
+            <div class="kpi-value" id="val-top-category"
+              style="font-size:1.15rem; margin-top:8px; font-weight:800; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">
+              -</div>
+            <div class="kpi-sub" style="font-size:0.78rem;">Highest monthly debit</div>
+          </div>
+
+          <div class="kpi-card" style="padding: 20px;">
+            <div class="kpi-header">
+              <span class="kpi-title" style="font-size:0.75rem;">Budget Utilization</span>
+              <div class="kpi-icon" style="width:30px; height:30px; font-size:0.9rem;"><i
+                  data-lucide="check-square"></i></div>
+            </div>
+            <div class="kpi-value" id="val-budget-usage" style="font-size:1.6rem; margin-top:8px;">0%</div>
+            <div class="kpi-sub" style="font-size:0.78rem;">Of total category limit</div>
+          </div>
+        </div>
+
+        <!-- Primary 2-Column Fintech Workspace -->
+        <div class="dashboard-workspace">
+          <!-- Left Workspace: Charts & Logs -->
+          <div class="workspace-main">
+            <!-- Row 1: Line and Bar Chart side-by-side -->
+            <div class="charts-grid">
+              <div class="chart-card">
+                <div class="chart-title-wrapper">
+                  <span class="chart-title">Spending Trend (Last 6 Months)</span>
+                </div>
+                <div class="chart-container">
+                  <canvas id="trendChart"></canvas>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <div class="chart-title-wrapper">
+                  <span class="chart-title">Monthly Income vs Expense</span>
+                </div>
+                <div class="chart-container">
+                  <canvas id="incomeVsExpenseChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Log List Table -->
+            <div class="section-card">
+              <div class="section-header">
+                <span class="chart-title">Recent Transactions</span>
+                <button class="btn btn-secondary" onclick="switchTab('transactions')" style="padding: 8px 16px;">View
+                  Logs</button>
+              </div>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Merchant</th>
+                      <th>Category</th>
+                      <th>Type</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-transactions-tbody">
+                    <!-- Dynamic -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Workspace: Analytics breakdown, Budgets progress meters -->
+          <div class="workspace-side">
+            <!-- Doughnut Category Chart -->
+            <div class="chart-card" style="min-height: 350px;">
+              <div class="chart-title-wrapper">
+                <span class="chart-title">Expenses by Category</span>
+              </div>
+              <div class="chart-container">
+                <canvas id="categoryChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Budget Utilization horizontal chart -->
+            <div class="chart-card" style="min-height: 300px;">
+              <div class="chart-title-wrapper">
+                <span class="chart-title">Budget Spends %</span>
+              </div>
+              <div class="chart-container">
+                <canvas id="budgetChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Budget Progress lists -->
+            <div class="section-card">
+              <div class="section-header">
+                <span class="chart-title">Budget Limit Status</span>
+              </div>
+              <div id="dashboard-budgets-list" style="display: flex; flex-direction: column; gap: 14px;">
+                <!-- Dynamic progress bars -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 2: TRANSACTIONS VIEW -->
+      <div id="tab-transactions" class="tab-content">
+
+        <!-- SMS Paste cards -->
+        <div class="section-card">
+          <div class="section-header">
+            <span class="chart-title"><i data-lucide="cpu" style="vertical-align: middle; margin-right: 8px;"></i> Paste
+              Bank SMS to Extract</span>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="sms-paster">Copy-Paste SMS notifications from HDFC or other banks</label>
+            <textarea id="sms-paster" rows="3" placeholder="Example: Debit (or) Credit..."
+              oninput="handleSMSPaste(this.value)"></textarea>
+          </div>
+
+          <!-- Live Preview slot -->
+          <div id="sms-preview-panel" style="display: none;" class="sms-preview-card">
+            <div class="sms-preview-title">Real-Time Extraction Preview</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Amount (₹)</label>
+                <input type="number" id="preview-amount" step="0.01">
+              </div>
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="preview-date">
+              </div>
+              <div class="form-group">
+                <label>Type</label>
+                <select id="preview-type">
+                  <option value="Debit">Debit (Expense)</option>
+                  <option value="Credit">Credit (Income)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Merchant / Sender</label>
+                <input type="text" id="preview-merchant">
+              </div>
+              <div class="form-group">
+                <label>Category</label>
+                <select id="preview-category">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Reference</label>
+                <input type="text" id="preview-ref">
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+              <button class="btn btn-secondary" onclick="clearSMSPaste()">Clear</button>
+              <button class="btn btn-primary" onclick="saveParsedSMS()">
+                <i data-lucide="check-circle-2"></i> Save Parsed Log
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table filtering, search, pagination control grid -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="filter-bar">
+              <div class="filter-group">
+                <label for="filter-date">Timeframe</label>
+                <select id="filter-date">
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="yesterday">Yesterday</option>
+                  <option value="this-week">This Week</option>
+                  <option value="this-month" selected>This Month</option>
+                  <option value="last-month">Last Month</option>
+                  <option value="last-3-months">Last 3 Months</option>
+                  <option value="this-year">This Year</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+              </div>
+
+              <div class="filter-group" id="custom-date-grp" style="display: none;">
+                <input type="date" id="filter-start-date">
+                <span style="color: var(--text-muted); font-size: 0.8rem;">to</span>
+                <input type="date" id="filter-end-date">
+              </div>
+
+              <div class="filter-group">
+                <label for="filter-type">Type</label>
+                <select id="filter-type">
+                  <option value="all">All Types</option>
+                  <option value="Debit">Debit (Spends)</option>
+                  <option value="Credit">Credit (Income)</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="filter-category">Category</label>
+                <select id="filter-category">
+                  <option value="all">All Categories</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="filter-merchant">Search</label>
+                <input type="text" id="filter-merchant" placeholder="Merchant, reference...">
+              </div>
+            </div>
+          </div>
+
+          <!-- Master Transactions logs list table -->
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th sort-key="Date">Date ▲▼</th>
+                  <th sort-key="Merchant">Merchant ▲▼</th>
+                  <th sort-key="Category">Category ▲▼</th>
+                  <th sort-key="Type">Type ▲▼</th>
+                  <th sort-key="Amount">Amount ▲▼</th>
+                  <th sort-key="Account">Account</th>
+                  <th sort-key="Reference">Reference ID</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="transactions-tbody">
+                <!-- Javascript dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State visual alerts -->
+          <div id="no-transactions-alert"
+            style="display: none; text-align: center; padding: 50px; color: var(--text-muted);">
+            <i data-lucide="info" style="width: 48px; height: 48px; margin-bottom: 14px; color: var(--text-muted);"></i>
+            <p style="font-weight: 600;">No transactions found matching active filter bounds.</p>
+          </div>
+
+          <!-- Advanced Pagination Controller -->
+          <div class="pagination-container" id="pagination-section">
+            <div class="pagination-info">
+              Showing <span id="val-page-start" style="font-weight:700;">0</span> to <span id="val-page-end"
+                style="font-weight:700;">0</span> of <span id="val-page-total" style="font-weight:700;">0</span> records
+            </div>
+
+            <div style="display: flex; gap: 20px; align-items: center;">
+              <div class="filter-group">
+                <label for="page-size-selector" style="font-size:0.75rem;">Page Size</label>
+                <select id="page-size-selector" onchange="handlePageSizeChange(this.value)"
+                  style="padding: 6px 12px; border-radius:8px;">
+                  <option value="10" selected>10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+
+              <div class="pagination-controls" id="table-pagination-nav">
+                <!-- Navigation page numbers dynamically drawn -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 3: BUDGETS & CATEGORIES VIEW -->
+      <div id="tab-budgets" class="tab-content">
+
+        <div class="charts-grid" style="grid-template-columns: 2.2fr 1fr;">
+          <!-- Setup Monthly budget limits limits table -->
+          <div class="section-card">
+            <div class="section-header">
+              <span class="chart-title">Category Budgets</span>
+              <div class="filter-group">
+                <label for="budget-month-selector">Month/Year</label>
+                <input type="month" id="budget-month-selector" onchange="loadBudgetLimitsForMonth()">
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Current Active Limit</th>
+                    <th>New Monthly Limit (₹)</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="budget-limits-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Create Custom Categories Panel -->
+          <div class="section-card" style="height: fit-content;">
+            <div class="section-header">
+              <span class="chart-title">Add New Category</span>
+            </div>
+
+            <div class="form-group">
+              <label for="new-cat-name">Category Name</label>
+              <input type="text" id="new-cat-name" placeholder="e.g. Entertainment">
+            </div>
+
+            <div class="form-group">
+              <label for="new-cat-budget">Default Monthly Budget limit (₹)</label>
+              <input type="number" id="new-cat-budget" placeholder="e.g. 3000" value="0">
+            </div>
+
+            <div class="form-group">
+              <label for="new-cat-desc">Associated Keywords (Comma separated)</label>
+              <textarea id="new-cat-desc" rows="2" placeholder="e.g. netflix, spotify, movie, cinema"></textarea>
+            </div>
+
+            <button class="btn btn-primary" onclick="submitNewCategory()" style="margin-top: 10px;">
+              <i data-lucide="plus-circle"></i> Create Category
+            </button>
+          </div>
+        </div>
+
+        <!-- Auto-learning dictionary lookup -->
+        <div class="section-card">
+          <div class="section-header">
+            <span class="chart-title">AI Auto-Merchant Learning Dictionary</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Dynamically registers categories parsed from
+              manual merchant edits.</span>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Merchant Name</th>
+                  <th>Auto Route Category</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="settings-learning-tbody">
+                <!-- Javascript populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 4: REPORTS, ANALYTICS & EXPORTS -->
+      <div id="tab-reports" class="tab-content">
+
+        <!-- Advanced local exports -->
+        <div class="section-card">
+          <div class="section-header">
+            <span class="chart-title">Generate & Export Financial Reports</span>
+          </div>
+
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">
+            Generate printable, vector-scaled PDF statements, standard Microsoft Excel formats (.xlsx), or raw CSV rows
+            locally. All operations are private.
+          </p>
+
+          <div class="filter-bar" style="margin-top: 10px;">
+            <div class="filter-group">
+              <label for="report-timeframe">Period Selector</label>
+              <select id="report-timeframe">
+                <option value="this-month">This Month</option>
+                <option value="last-month">Last Month</option>
+                <option value="last-3-months">Last 3 Months</option>
+                <option value="this-year">This Year</option>
+                <option value="all">All Time</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px;">
+            <button class="btn btn-secondary" onclick="exportData('csv')">
+              <i data-lucide="file-spreadsheet" style="color: var(--success);"></i> Export CSV
+            </button>
+            <button class="btn btn-secondary" onclick="exportData('excel')">
+              <i data-lucide="file-spreadsheet" style="color: var(--info);"></i> Export Excel (.xlsx)
+            </button>
+            <button class="btn btn-secondary" onclick="exportData('pdf')">
+              <i data-lucide="file-text" style="color: var(--danger);"></i> Export PDF Report
+            </button>
+          </div>
+        </div>
+
+        <!-- Leaderboards Summary -->
+        <div class="charts-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+          <div class="section-card">
+            <div class="section-header">
+              <span class="chart-title">Top Merchant Outlets (This Month)</span>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Merchant Name</th>
+                    <th>Count</th>
+                    <th>Total Spent (₹)</th>
+                  </tr>
+                </thead>
+                <tbody id="report-merchants-tbody">
+                  <!-- Populated from JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-header">
+              <span class="chart-title">Top Category Summary (This Month)</span>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Category Label</th>
+                    <th>Total Spent (₹)</th>
+                    <th>Percentage share</th>
+                  </tr>
+                </thead>
+                <tbody id="report-categories-tbody">
+                  <!-- Populated from JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- POPUP MODAL: QUICK ADD/EDIT TRANSACTION -->
+  <div class="modal-overlay" id="tx-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" id="tx-modal-title">Add Transaction Log</span>
+        <button class="btn btn-icon" onclick="closeTxModal()" style="border: none; background: transparent;">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="form-rowIndex">
+        <input type="hidden" id="form-ID">
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="form-date">Transaction Date *</label>
+            <input type="date" id="form-date" required>
+          </div>
+
+          <div class="form-group">
+            <label for="form-amount">Amount (₹) *</label>
+            <input type="number" id="form-amount" placeholder="0.00" step="0.01" required>
+          </div>
+
+          <div class="form-group">
+            <label for="form-type">Transaction Type *</label>
+            <select id="form-type" onchange="handleFormTypeChange(this.value)">
+              <option value="Debit">Debit (Expense)</option>
+              <option value="Credit">Credit (Income)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="form-category">Category *</label>
+            <select id="form-category">
+              <!-- Populated dynamic -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="form-merchant">Merchant / Outlet Description *</label>
+            <input type="text" id="form-merchant" placeholder="e.g. Swiggy, HPCL, Salary Pay">
+          </div>
+
+          <div class="form-group">
+            <label for="form-account">Card / Account Reference</label>
+            <input type="text" id="form-account" placeholder="e.g. HDFC A/C *8670">
+          </div>
+
+          <div class="form-group">
+            <label for="form-reference">Reference UPI ID</label>
+            <input type="text" id="form-reference" placeholder="e.g. UPI 614825150346">
+          </div>
+
+          <div class="form-group">
+            <label for="form-balance">Current Balance (Post-Txn)</label>
+            <input type="number" id="form-balance" placeholder="0.00" step="0.01">
+          </div>
+
+          <div class="form-group full-width">
+            <label for="form-notes">Personal Notes</label>
+            <textarea id="form-notes" rows="2" placeholder="Any specific personal remarks..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeTxModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitTransactionForm()">Save Transaction</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP MODAL: BULK SMS PASTING -->
+  <div class="modal-overlay" id="bulk-modal">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <span class="modal-title">Bulk Import SMS Alerts</span>
+        <button class="btn btn-icon" onclick="closeBulkModal()" style="border: none; background: transparent;">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+          Paste multiple bank SMS messages. Each message must be separated by an empty line spacer.
+        </p>
+        <div class="form-group">
+          <textarea id="bulk-sms-input" rows="8"
+            placeholder="Paste SMS 1 here...&#10;&#10;Paste SMS 2 here..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeBulkModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitBulkSMSImport()">
+          <i data-lucide="arrow-down-to-line"></i> Bulk Import
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- SCRIPTS & LOGIC INTEGRATION -->
+  <!-- External visual CDNs -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Link external app.js logic -->
+  <script type="module" src="firebase.js"></script>
+  <script src="app.js"></script>
+
+  <script>
+    // Initialize icons
+    lucide.createIcons();
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    window.db = db;
+    window.addDoc = addDoc;
+    window.collection = collection;
+    window.getDocs = getDocs;
+  </script>
+
+</body>
+
+</html>
